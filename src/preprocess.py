@@ -6,7 +6,9 @@ Combines data cleaning and text normalization
 import csv
 import re
 import unicodedata
+
 import torch
+from torch.utils.data import Dataset
 from typing import Any, List, Tuple, Optional
 import nltk
 from nltk.corpus import stopwords
@@ -166,7 +168,47 @@ class TextPreprocessor:
         return normalized_text
 
 
-def prepare_data(path: str, normalize: bool = True) -> Tuple[torch.Tensor, torch.Tensor]:
+class TextDataset(Dataset):
+    def __init__(self, X_tensor, y_tensor, tokenizer, max_len):
+        """
+        初始化时接收 Tensor
+        """
+        # Tensor 存储在属性中
+        self.texts_tensor = X_tensor   # dtype=torch.object
+        self.labels_tensor = y_tensor # dtype=torch.long
+        self.tokenizer = tokenizer
+        self.max_len = max_len
+
+    def __len__(self):
+        return len(self.labels_tensor)
+
+    def __getitem__(self, idx):
+        """
+        Tokenize 在这里发生。
+        当 DataLoader 取数据时，这里才实时进行分词。
+        """
+        text = str(self.texts_tensor[idx].item())
+
+        # 标签也从 Tensor 中取出
+        label = self.labels_tensor[idx].item()
+
+        encoding = self.tokenizer.encode_plus(
+            text,
+            add_special_tokens=True,
+            max_length=self.max_len,
+            padding='max_length',  # 或者 'longest'
+            truncation=True,
+            return_attention_mask=True,
+            return_tensors='pt',  # 返回 PyTorch Tensor
+        )
+        return {
+            'input_ids': encoding['input_ids'].flatten(),
+            'attention_mask': encoding['attention_mask'].flatten(),
+            # label 已经是一个 Python 整数，可以直接转为 torch.tensor
+            'labels': torch.tensor(label, dtype=torch.long)
+        }
+
+def prepare_data(path: str) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Load and preprocess data from CSV
     
@@ -183,8 +225,8 @@ def prepare_data(path: str, normalize: bool = True) -> Tuple[torch.Tensor, torch
     """
     
     preprocessor = TextPreprocessor(
-        remove_stopwords=normalize,
-        lemmatize=normalize
+        remove_stopwords=True,
+        lemmatize=True
     )
     
     X_list = []
