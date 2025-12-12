@@ -9,3 +9,5 @@ __pycache__/
 # 忽略环境依赖
 venv/
 .env
+
+.idea/
