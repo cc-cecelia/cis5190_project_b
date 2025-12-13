@@ -1,6 +1,7 @@
 import argparse
 import os
 import torch
+from torchgen.static_runtime.generator import generate_test_value_names
 from transformers import (
     DistilBertTokenizerFast,
     DistilBertForMaskedLM,
@@ -11,25 +12,32 @@ from transformers import (
 from transformers import LineByLineTextDataset
 import pandas as pd
 from util.arg_parser import datp_parse_args
+import config
 
 args = datp_parse_args()
 
-DATA_PATH = "data/processed/processed_data.csv"
-OUTPUT_DIR = f"models/dapt_checkpoints/dapt_lr{args.lr}_ep{args.epochs}"
-MODEL_NAME = "distilbert-base-uncased"
+def generate_name():
+    name = "dapt"
+    if args.lr != config.LR:
+        name += "_" + args.lr
+    if args.epochs != config.EPOCHS:
+        name += "_" + args.epochs
+    return name
+
+OUTPUT_NAME = generate_name()
+OUTPUT_DIR = config.MODELS_DAPT_CPS / OUTPUT_NAME
 
 def train_dapt():
     # 1. 纯文本数据
-    df = pd.read_csv(DATA_PATH)
-    text_file = "../data/processed/dapt_titles.txt"
-    os.makedirs(os.path.dirname(text_file), exist_ok=True)
+    df = pd.read_csv(config.PROCESSED_DATA)
+    text_file = config.PROCESSED_DATA_DIR / "dapt_titles.txt"
 
     with open(text_file, "w", encoding="utf-8") as f:
         for text in df['title'].dropna():
             f.write(str(text) + "\n")
 
-    tokenizer = DistilBertTokenizerFast.from_pretrained(MODEL_NAME)
-    model = DistilBertForMaskedLM.from_pretrained(MODEL_NAME)
+    tokenizer = DistilBertTokenizerFast.from_pretrained(config.BERT)
+    model = DistilBertForMaskedLM.from_pretrained(config.BERT)
 
     dataset = LineByLineTextDataset(
         tokenizer = tokenizer,
@@ -52,7 +60,7 @@ def train_dapt():
         learning_rate=args.lr,
         weight_decay=0.01,
         fp16=torch.cuda.is_available(),  # 如果有 GPU 开启混合精度加速
-        logging_dir=f'../models/logs/dapt_lr{args.lr}_ep{args.epochs}_logs',
+        logging_dir=f'../models/logs/{OUTPUT_NAME}_logs',
     )
 
     trainer = Trainer(

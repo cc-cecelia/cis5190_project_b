@@ -27,7 +27,7 @@ def test_parse_args():
     parser.add_argument("--freeze_encoder", action="store_true",
                         help="Add this flag if the model was trained with frozen encoder")
 
-    parser.add_argument("--batch_size", type=int, default=32, help="Inference batch size")
+    parser.add_argument("--batch_size", type=int, default=16, help="Inference batch size")
 
     return parser.parse_args()
 

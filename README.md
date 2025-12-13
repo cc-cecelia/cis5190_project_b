@@ -55,6 +55,16 @@ python train.py --use_dapt --freeze_encoder --epochs 10 --lr 1e-5
 | `--epochs`         | `3`     | 训练轮数。                                              |
 | `--memo`           | None    | 如果需要的话，在模型最后加上备注                                   |
  | `--checkpoint`     | None    | dapt模型backbone的名字，如`dapt_lr2e-5_ep3` 普通base不用写。    |                                                |                                         |
+
+
+**最终训练策略（仅供参考，而且仅使用阶段1是我们ablation study中的一个）**：微调bert以及线性层可能2～4轮就够了，不整这么复杂的也可以。
+1. 阶段一：冻结 DistilBERT，训练线性层冻结 (Freeze，在train.py参数里 `--freeze_encoder`)只训练新的线性分类层。
+   + 学习率： 此时，使用高得多的学习率（例如 $1\text{e-}3$ 或 $1\text{e-}4$），因为只训练几层。
+   + 轮数： 在这个阶段，可能需要多训练几轮（例如 5-10 轮），直到线性层大致收敛。
+2. 阶段二：解冻 DistilBERT，进行完整微调解冻 (Unfreeze)
+   + 整个模型（DistilBERT + 线性层）一起训练。
+   + 学习率： 使用极低的学习率（例如 $1\text{e-}5$ 或更低）。
+   + 轮数： 1-2 轮。
 -----
 
 ### 3\. 模型评估

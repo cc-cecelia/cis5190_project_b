@@ -26,6 +26,10 @@ REPORT_PATH = "final_report.pdf"
 FIGURES_DIR = PROJECT_ROOT / "figures"
 EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
 
+# --- 默认参数
+LR = 2e-5
+DROPOUT = 0.5
+BATCH_SIZE = 16
+EPOCHS = 3
 
-# ---
 BERT = "distilbert-base-uncased"

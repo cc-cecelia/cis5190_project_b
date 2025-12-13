@@ -21,7 +21,14 @@ def generate_name(args):
         name += "_" + args.checkpoint + "_FT"
     else:
         name += "_base"
-    name += f"_lr{args.lr}_batch_{args.batch_size}_dr{args.dropout}_ep{args.epochs}"
+    if args.lr != config.LR:
+        name += "_" + args.lr
+    if args.batch_size != config.BATCH_SIZE:
+        name += "_" + args.batch_size
+    if args.dropout != config.DROPOUT:
+        name += "_" + args.dropout
+    if args.epochs != config.EPOCHS:
+        name += "_" + args.epochs
     if args.freeze_encoder:
         name += "_frozen"
     if args.memo is not None:
