@@ -1,3 +1,4 @@
+import os
 import torch
 from transformers import (
     DistilBertTokenizerFast,
@@ -11,7 +12,6 @@ import pandas as pd
 from util.arg_parser import datp_parse_args
 import config
 
-args = datp_parse_args()
 
 def generate_name():
     name = "dapt"
@@ -21,10 +21,7 @@ def generate_name():
         name += "_" + args.epochs
     return name
 
-OUTPUT_NAME = generate_name()
-OUTPUT_DIR = config.MODELS_DAPT_CPS / OUTPUT_NAME
-
-def train_dapt():
+def train_dapt(output_dir):
     # 1. 纯文本数据
     df = pd.read_csv(config.PROCESSED_DATA)
     text_file = config.PROCESSED_DATA_DIR / "dapt_titles.txt"
@@ -47,7 +44,7 @@ def train_dapt():
     )
 
     training_args = TrainingArguments(
-        output_dir=OUTPUT_DIR,
+        output_dir=output_dir,
         overwrite_output_dir=True,
         num_train_epochs=args.epochs,  # 3-5 个 epoch
         per_device_train_batch_size=16,
@@ -57,7 +54,7 @@ def train_dapt():
         learning_rate=args.lr,
         weight_decay=0.01,
         fp16=torch.cuda.is_available(),  # 如果有 GPU 开启混合精度加速
-        logging_dir=f'../models/logs/{OUTPUT_NAME}_logs',
+        logging_dir=f'../models/logs/{output_dir}_logs',
     )
 
     trainer = Trainer(
@@ -71,12 +68,14 @@ def train_dapt():
     trainer.train()
 
     # 保存最终模型骨架
-    print(f"Saving DAPT model to {OUTPUT_DIR}...")
-    trainer.save_model(OUTPUT_DIR)
-    tokenizer.save_pretrained(OUTPUT_DIR)
-
-    # if os.path.exists(text_file):
-    #     os.remove(text_file)
+    print(f"Saving DAPT model to {output_dir}...")
+    if os.path.exists(output_dir):
+        output_dir = output_dir + "_temp"
+    trainer.save_model(output_dir)
+    tokenizer.save_pretrained(output_dir)
 
 if __name__ == "__main__":
-    train_dapt()
+    args = datp_parse_args()
+    name = generate_name()
+    output_dir = config.MODELS_DAPT_CPS / name
+    train_dapt(output_dir)

@@ -1,3 +1,5 @@
+import datetime
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -122,6 +124,9 @@ def train():
     os.makedirs(config.MODELS_WEIGHTS_DIR, exist_ok=True)
     save_name = generate_name(args)
     save_path = config.MODELS_WEIGHTS_DIR / save_name
+    if os.path.exists(save_path):
+        print("Duplicate model weights found. Check!")
+        save_path += datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     torch.save(model.state_dict(), save_path)
 
     print(f"Model weights saved to {save_path}")
