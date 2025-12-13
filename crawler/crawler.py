@@ -62,34 +62,23 @@ class NewsCrawler:
         # Try multiple strategies to find the title
         title = None
         
-        # Strategy 1: <title> tag (works for both)
-        title_tag = soup.find('title')
-        if title_tag and title_tag.string:
-            title = title_tag.string.strip()
-            # Clean up Fox News titles (remove " | Fox News")
-            if source == 'fox':
-                title = re.sub(r'\s*\|\s*Fox News\s*$', '', title)
-            # Clean up NBC News titles
-            elif source == 'nbc':
-                title = re.sub(r'\s*-\s*NBC News\s*$', '', title)
-                title = re.sub(r'\s*\|\s*NBC News\s*$', '', title)
+        # Strategy 1: Look for h1 tags with specific classes (ACTUAL HEADLINES)
+        # This is the most reliable way to get real headlines
+        h1_candidates = [
+            soup.find('h1', class_=re.compile(r'headline.*speakable|speakable.*headline', re.I)),  # Both headline and speakable
+            soup.find('h1', class_='headline'),
+            soup.find('h1', class_=re.compile(r'headline', re.I)),
+            soup.find('h1', class_=re.compile(r'article.*title', re.I)),
+            soup.find('h1', class_=re.compile(r'article.*headline', re.I)),
+            soup.find('h1'),  # Any h1 as last resort
+        ]
         
-        # Strategy 2: Look for h1 tags with specific classes
-        if not title or len(title) < 10:
-            h1_candidates = [
-                soup.find('h1', class_='headline'),
-                soup.find('h1', class_=re.compile(r'headline')),
-                soup.find('h1', class_='speakable'),
-                soup.find('h1', class_=re.compile(r'article.*title')),
-                soup.find('h1'),
-            ]
-            
-            for h1 in h1_candidates:
-                if h1 and h1.get_text(strip=True):
-                    title = h1.get_text(strip=True)
-                    break
+        for h1 in h1_candidates:
+            if h1 and h1.get_text(strip=True):
+                title = h1.get_text(strip=True)
+                break
         
-        # Strategy 3: Look for meta tags
+        # Strategy 2: Look for meta tags (backup)
         if not title or len(title) < 10:
             meta_candidates = [
                 soup.find('meta', property='og:title'),
@@ -100,9 +89,15 @@ class NewsCrawler:
             for meta in meta_candidates:
                 if meta and meta.get('content'):
                     title = meta['content'].strip()
+                    # Clean up suffixes from meta tags
+                    if source == 'fox':
+                        title = re.sub(r'\s*\|\s*Fox News\s*$', '', title)
+                    elif source == 'nbc':
+                        title = re.sub(r'\s*-\s*NBC News\s*$', '', title)
+                        title = re.sub(r'\s*\|\s*NBC News\s*$', '', title)
                     break
         
-        # Strategy 4: Look for article title classes
+        # Strategy 3: Look for article title classes
         if not title or len(title) < 10:
             article_title_candidates = [
                 soup.find('h1', class_='title'),
@@ -115,14 +110,22 @@ class NewsCrawler:
                     title = element.get_text(strip=True)
                     break
         
+        # Strategy 4: <title> tag (last resort - may have SEO text)
+        if not title or len(title) < 10:
+            title_tag = soup.find('title')
+            if title_tag and title_tag.string:
+                title = title_tag.string.strip()
+                # Clean up suffixes
+                if source == 'fox':
+                    title = re.sub(r'\s*\|\s*Fox News\s*$', '', title)
+                elif source == 'nbc':
+                    title = re.sub(r'\s*-\s*NBC News\s*$', '', title)
+                    title = re.sub(r'\s*\|\s*NBC News\s*$', '', title)
+        
         # Clean up the title
         if title:
             # Remove extra whitespace
             title = ' '.join(title.split())
-            # Remove common suffixes
-            title = re.sub(r'\s*\|\s*Fox News\s*$', '', title)
-            title = re.sub(r'\s*-\s*NBC News\s*$', '', title)
-            title = re.sub(r'\s*\|\s*NBC News\s*$', '', title)
             
         return title if title else None
     

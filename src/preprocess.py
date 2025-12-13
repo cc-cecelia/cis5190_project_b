@@ -79,6 +79,9 @@ class TextPreprocessor:
         text = text.replace('"', '"').replace('"', '"')
         text = text.replace(''', "'").replace(''', "'")
         
+        # Strip surrounding quotes
+        text = text.strip('"').strip("'")
+        
         # Fix spacing before punctuation
         text = re.sub(r'\s+([,\.!?;:])', r'\1', text)
         
