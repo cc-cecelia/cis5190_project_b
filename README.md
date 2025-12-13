@@ -37,22 +37,22 @@ python train.py --save_name model_base.pt
 python train.py --use_dapt --save_name model_dapt.pt --batch_size 16 --epochs 3
 
 # 使用 DAPT 权重并冻结编码器训练 (只训练分类头)
-python train.py --use_dapt --freeze_encoder --save_name model_dapt_ep_10_frozen.pt --epochs 10
+python train.py --use_dapt --freeze_encoder --save_name model_dapt_lr1e5_ep_10_frozen.pt --epochs 10 --lr 1e-5
 
 # 剩下的可以自行组合，注意model save命名，如果不是默认参数，就要写上具体内容
 ```
 
 **核心参数说明:**
 
-| 参数 | 默认值 | 描述 |
-| :--- | :--- | :--- |
-| `--use_dapt` | `False` | **(Flag)** 使用 DAPT 预训练的权重 (需要先运行 `train_dapt.py`)。|
-| `--freeze_encoder` | `False` | **(Flag)** 冻结 BERT 编码器层，只训练顶部的分类头。|
-| `--lr` | `2e-5` | 学习率 (Learning Rate)。|
-| `--dropout` | `0.1` | 分类头中的 Dropout 概率。|
-| `--batch_size` | `16` | 训练批次大小 (Batch Size)。|
-| `--epochs` | `3` | 训练轮数。|
-| `--save_name` | **(必须)** | 保存的模型文件名，如 `my_model.pt`。 |
+| 参数 | 默认值 | 描述                                                 |
+| :--- | :--- |:---------------------------------------------------|
+| `--use_dapt` | `False` | **(Flag)** 使用 DAPT 预训练的权重 (需要先运行 `train_dapt.py`)。 |
+| `--freeze_encoder` | `False` | **(Flag)** 冻结 BERT 编码器层，只训练顶部的分类头。                 |
+| `--lr` | `2e-5` | 学习率 (Learning Rate)。                               |
+| `--dropout` | `0.1` | 分类头中的 Dropout 概率。                                  |
+| `--batch_size` | `16` | 训练批次大小 (Batch Size)。                               |
+| `--epochs` | `3` | 训练轮数。                                              |
+| `--save_name` | **(必须)** | 保存的模型文件名，如 `model_base.pt`。                        |
 
 -----
 
@@ -64,23 +64,15 @@ python train.py --use_dapt --freeze_encoder --save_name model_dapt_ep_10_frozen.
 
 ```bash
 # 评估使用 DAPT 训练的模型
-python test.py --model_path models/weights/model_dapt.pt --use_dapt
+python test.py --model_path models/weights/model_dapt_XXXX.pt --use_dapt
 
 # 评估基础模型
-python test.py --model_path models/weights/model_base.pt
+python test.py --model_path models/weights/model_base_XXXX.pt
 ```
 
 **核心参数说明:**
 
-| 参数 | 默认值 | 描述 |
-| :--- | :--- | :--- |
-| `--model_path` | **(必须)** | 待评估模型的 `.pt` 文件路径。|
-| `--use_dapt` | `False` | **(Flag)** 必须与训练时设置保持一致，用于正确加载 DAPT 模型架构。|
-| `--freeze_encoder` | `False` | **(Flag)** 必须与训练时设置保持一致，用于正确加载冻结编码器的模型架构。|
-| `--batch_size` | `32` | 推理时的批次大小。|
-
------
-
-您现在可以开始训练和评估您的模型了！
-
-是否需要我为您列出如何在命令行中执行这些步骤？
+| 参数 | 默认值 | 描述                                                 |
+| :--- | :--- |:---------------------------------------------------|
+| `--model_path` | **(必须)** | 待评估模型的 `.pt` 文件路径。                                 |
+| `--use_dapt` | `False` | **(Flag)** 必须与模型名字里是否有dapt设置保持一致，用于正确加载 DAPT 模型架构。 |
