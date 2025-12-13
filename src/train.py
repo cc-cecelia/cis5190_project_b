@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from model import Model
 from datetime import datetime
-
+from util.arg_parser import train_parse_args
 # -------------------
 #   log information
 # -------------------
@@ -30,26 +30,8 @@ writer = SummaryWriter(log_path)
 # -------------------
 _TOKENIZER = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Train News Classifier")
-
-    parser.add_argument("--use_dapt", action="store_true", help="是否使用 DAPT 预训练过的权重")
-    parser.add_argument("--freeze_encoder", action="store_true", help="是否冻结 BERT，只训练分类头")
-
-    parser.add_argument("--lr", type=float, default=2e-5, help="学习率 (Learning Rate)")
-    parser.add_argument("--dropout", type=float, default=0.1, help="Dropout 概率 (传给 model.py)")
-    parser.add_argument("--batch_size", type=int, default=16, help="Batch Size")
-    parser.add_argument("--epochs", type=int, default=3, help="训练轮数")
-
-    parser.add_argument("--save_name", type=str, required=True, help="保存模型的名字，例如 model_dapt_lr2e5.pt")
-    parser.add_argument("--dapt_path", type=str, default="models/dapt_checkpoints", help="DAPT 权重的本地文件夹路径")
-
-    return parser.parse_args()
-
-
 def train():
-    args = parse_args()
+    args = train_parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # 1. Data prepare
