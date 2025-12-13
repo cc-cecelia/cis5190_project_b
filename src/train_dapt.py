@@ -65,5 +65,5 @@ def train_dapt():
     trainer.save_model(OUTPUT_DIR)
     tokenizer.save_pretrained(OUTPUT_DIR)
 
-    # if os.path.exists(text_file):
-    #     os.remove(text_file)
+    if os.path.exists(text_file):
+        os.remove(text_file)
