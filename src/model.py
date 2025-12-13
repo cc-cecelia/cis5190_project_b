@@ -2,8 +2,11 @@ import torch
 from torch import nn
 from typing import Any, Iterable, List
 from transformers import DistilBertModel, DistilBertTokenizerFast
+import os
 
 _TOKENIZER = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
+base_path = "../models/base_checkpoints"
+dapt_path = "../models/dapt_checkpoints"
 
 class Model(nn.Module):
     """
@@ -17,16 +20,21 @@ class Model(nn.Module):
     - If you use PyTorch, submit a state_dict to be loaded via `load_state_dict`
     """
 
-    def __init__(self, use_dapt: bool = False, freeze_encoder: bool = False, dropout_prob: float = 0.1) -> None:
+    def __init__(self, use_dapt: bool = False, freeze_encoder: bool = False, dropout_prob: float = 0.1, **kwargs) -> None:
         # Initialize your model here
         super().__init__()
 
-        if use_dapt: # 加载用DAPT
-            final_path = "../models/dapt_checkpoints"
-        else:
-            final_path = "../models/base_checkpoints"
+        load_path = "distilbert-base-uncased"
+        # 在本地训练时，可以自行加载权重作为初始状态
+        # 但在提交时，由于文件夹不存在，fallback 到标准模型
+        if use_dapt and os.path.exists(dapt_path):
+            load_path = dapt_path
+        elif not use_dapt and os.path.exists(base_path):
+            load_path = base_path
 
-        self.bert = DistilBertModel.from_pretrained(final_path)
+        print(f"Initializing model backbone from: {load_path}")
+
+        self.bert = DistilBertModel.from_pretrained(load_path)
 
         hidden_size = self.bert.config.hidden_size  # 768 for distilbert-base
 
