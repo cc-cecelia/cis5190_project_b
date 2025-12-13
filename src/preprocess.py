@@ -267,10 +267,10 @@ def prepare_data(path: str) -> Tuple[torch.Tensor, torch.Tensor]:
     print(f"Loaded {len(X_list)} valid records")
 
     # Convert to torch Tensors (object dtype allowed)
-    X_tensor = torch.tensor(X_list, dtype=torch.object)
+    # X_tensor = torch.tensor(X_list, dtype=torch.object)
     y_tensor = torch.tensor(y_list, dtype=torch.long)
 
-    return X_tensor, y_tensor
+    return X_list, y_tensor
 
 
 def preprocess_and_save(input_csv: str, output_csv: str, normalize: bool = True) -> None:
