@@ -20,6 +20,7 @@ python train_dapt.py
 **说明:**
   * 该脚本会使用 `data/processed/processed_data.csv` 中的标题数据，在 DistilBERT 上进行 Masked Language Modeling 任务的继续训练。
   * 训练后的权重将保存在 `models/dapt_checkpoints` 目录下。
+  * 可以修改epoch 和 lr command方法和默认值同`train.py`
 
 -----
 
