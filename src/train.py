@@ -95,13 +95,17 @@ def train():
         print(f"Epoch {epoch + 1}/{args.epochs} | Loss: {avg_loss:.4f} | Val Acc: {val_acc:.4f}")
 
     # 4. saving
-    save_path = os.path.join("models/weights", args.save_name)
+    save_path = "models/weights"
+    os.makedirs(save_path, exist_ok=True)
+
+    save_path = os.path.join(save_path, args.save_name)
     torch.save(model.state_dict(), save_path)
+
     print(f"Model weights saved to {save_path}")
 
     # 保存训练记录 (JSON 文件) 用于画图
     log_name = args.save_name.replace(".pt", ".json")
-    with open(os.path.join("../models/logs", log_name), "w") as f:
+    with open(os.path.join("./models/logs", log_name), "w") as f:
         json.dump(history, f)
 
 
