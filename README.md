@@ -54,7 +54,7 @@ python train.py --use_dapt --freeze_encoder --save_name model_dapt_lr1e5_ep_10_f
 | `--batch_size` | `16` | 训练批次大小 (Batch Size)。                               |
 | `--epochs` | `3` | 训练轮数。                                              |
 | `--save_name` | **(必须)** | 保存的模型文件名，如 `model_base.pt`。                        |
-
+ | `--checkpoint` | None | dapt模型backbone的名字，如`dapt_lr2e-5_ep3` 普通base不用写。    |            |                                         |                                         |
 -----
 
 ### 3\. 模型评估

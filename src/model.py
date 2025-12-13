@@ -5,8 +5,7 @@ from transformers import DistilBertModel, DistilBertTokenizerFast
 import os
 
 _TOKENIZER = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
-base_path = "../models/base_checkpoints"
-dapt_path = "../models/dapt_checkpoints"
+backbone_base = "models/"
 
 class Model(nn.Module):
     """
@@ -20,18 +19,22 @@ class Model(nn.Module):
     - If you use PyTorch, submit a state_dict to be loaded via `load_state_dict`
     """
 
-    def __init__(self, use_dapt: bool = False, freeze_encoder: bool = False, dropout_prob: float = 0.1, weights_path = "model.pt", **kwargs) -> None:
+    def __init__(self, use_dapt: bool = False, freeze_encoder: bool = False, dropout_prob: float = 0.1, checkpoint = None, **kwargs) -> None:
         # Initialize your model here
         super().__init__()
 
-        load_path = "distilbert-base-uncased"
-        # 在本地训练时，可以自行加载权重作为初始状态
-        # 但在提交时，由于文件夹不存在，fallback 到标准模型
-        if use_dapt and os.path.exists(dapt_path): # 本地运行
-            load_path = dapt_path
-        elif not use_dapt and os.path.exists(base_path): # 本地运行
-            load_path = base_path
-        # 评测机运行
+        if use_dapt:
+            path = os.path.join(backbone_base,"dapt_checkpoints", checkpoint)
+            if os.path.exists(path):
+                load_path = path # 本地 用指定的dapt backbone
+            else:
+                load_path = "distilbert-base-uncased" # 非本地，fallback到 plain bert backbone
+        else:
+            path = os.path.join(backbone_base, "base_checkpoints")
+            if os.path.exists(path):
+                load_path = path # 本地 不用dapt 免下载
+            else:
+                load_path = "distilbert-base-uncased" # 管你本不本地，直接plain bert backbone
 
         print(f"Initializing model backbone from: {load_path}")
 

@@ -15,7 +15,7 @@ from util.arg_parser import test_parse_args
 args = test_parse_args()
 
 DATA_PATH = "data/processed/processed_data.csv"
-OUTPUT_DIR = "models/dapt_checkpoints"
+OUTPUT_DIR = f"models/dapt_checkpoints/dapt_lr{args.lr}_ep{args.epochs}"
 MODEL_NAME = "distilbert-base-uncased"
 
 def train_dapt():
@@ -52,7 +52,7 @@ def train_dapt():
         learning_rate=args.lr,
         weight_decay=0.01,
         fp16=torch.cuda.is_available(),  # 如果有 GPU 开启混合精度加速
-        logging_dir='models/logs/dapt_logs',
+        logging_dir=f'models/logs/dapt_lr{args.lr}_ep{args.epochs}_log',
     )
 
     trainer = Trainer(

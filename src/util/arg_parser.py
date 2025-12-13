@@ -2,7 +2,7 @@ import argparse
 
 def train_parse_args():
     parser = argparse.ArgumentParser(description="Train News Classifier")
-
+    parser.add_argument("--checkpoint", type=str, default=None, help="模型backbone Checkpoint。e.g.dapt_lr2e5_ep3")
     parser.add_argument("--use_dapt", action="store_true", help="是否使用 DAPT 预训练过的权重")
     parser.add_argument("--freeze_encoder", action="store_true", help="是否冻结 BERT，只训练分类头")
 

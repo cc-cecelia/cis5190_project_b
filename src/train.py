@@ -18,7 +18,7 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # 1. Data prepare
-    texts, labels = prepare_data("./data/processed/processed_data.csv")
+    texts, labels = prepare_data("./data/processed/processed_data.csv") #TODO：可能线上提交以后就会变得奇怪？也许应该写个大的Config把这些地址都存进去方便修改
     texts = list(texts)
     labels = list(labels)
 
@@ -43,6 +43,7 @@ def train():
         use_dapt=args.use_dapt,
         freeze_encoder=args.freeze_encoder,
         dropout_prob=args.dropout,
+        checkpoint=args.checkpoint,
     )
     model.to(device)
 
