@@ -1,3 +1,4 @@
+import argparse
 import os
 import torch
 from transformers import (
@@ -9,6 +10,9 @@ from transformers import (
 )
 from transformers import LineByLineTextDataset
 import pandas as pd
+from util.arg_parser import test_parse_args
+
+args = test_parse_args()
 
 DATA_PATH = "data/processed/processed_data.csv"
 OUTPUT_DIR = "models/dapt_checkpoints"
@@ -40,12 +44,12 @@ def train_dapt():
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
         overwrite_output_dir=True,
-        num_train_epochs=3,  # 3-5 个 epoch
+        num_train_epochs=args.epochs,  # 3-5 个 epoch
         per_device_train_batch_size=16,
         save_steps=10_000,
         save_total_limit=2,
         prediction_loss_only=True,  # 我们只需要降低 Loss，不需要准确率
-        learning_rate=2e-5,
+        learning_rate=args.lr,
         weight_decay=0.01,
         fp16=torch.cuda.is_available(),  # 如果有 GPU 开启混合精度加速
         logging_dir='models/logs/dapt_logs',
