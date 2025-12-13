@@ -404,9 +404,8 @@ def main():
     import os
     
     # Default paths
-    input_csv = "data/processed/crawled_data.csv"
-    output_csv = "data/processed/processed_data.csv"
-    
+    input_csv = "data/processed/crawled_data_merged.csv"
+    output_csv = "data/processed/processed_data_merged.csv"
     # Check if input file exists
     if not os.path.exists(input_csv):
         print(f"Error: Input file not found: {input_csv}")
