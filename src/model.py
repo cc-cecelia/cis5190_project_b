@@ -2,8 +2,11 @@ import torch
 from torch import nn
 from typing import Any, Iterable, List
 from transformers import DistilBertModel, DistilBertTokenizerFast
+import os
 
 _TOKENIZER = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
+base_path = "../models/base_checkpoints"
+dapt_path = "../models/dapt_checkpoints"
 
 class Model(nn.Module):
     """
@@ -17,16 +20,22 @@ class Model(nn.Module):
     - If you use PyTorch, submit a state_dict to be loaded via `load_state_dict`
     """
 
-    def __init__(self, bert_path: str = None, freeze_encoder: bool = False, dropout_prob: float = 0.1) -> None:
+    def __init__(self, use_dapt: bool = False, freeze_encoder: bool = False, dropout_prob: float = 0.1, weights_path = "model.pt", **kwargs) -> None:
         # Initialize your model here
         super().__init__()
 
-        if bert_path:
-            # 从huggingface下载
-            self.bert = DistilBertModel.from_pretrained(bert_path)
-        else:
-            # 从本地加载
-            self.bert = DistilBertModel.from_pretrained("distilbert-base-uncased")
+        load_path = "distilbert-base-uncased"
+        # 在本地训练时，可以自行加载权重作为初始状态
+        # 但在提交时，由于文件夹不存在，fallback 到标准模型
+        if use_dapt and os.path.exists(dapt_path): # 本地运行
+            load_path = dapt_path
+        elif not use_dapt and os.path.exists(base_path): # 本地运行
+            load_path = base_path
+        # 评测机运行
+
+        print(f"Initializing model backbone from: {load_path}")
+
+        self.bert = DistilBertModel.from_pretrained(load_path)
 
         hidden_size = self.bert.config.hidden_size  # 768 for distilbert-base
 
@@ -37,9 +46,14 @@ class Model(nn.Module):
             for p in self.bert.parameters():
                 p.requires_grad = False
 
-    def forward(self, batch: Iterable[Any]) -> List[Any]:
-        input_ids = batch.get("input_ids")
-        attention_mask = batch.get("attention_mask")
+    def forward(self, batch) -> List[Any]:
+        device = next(self.parameters()).device
+        if isinstance(batch, dict):
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+        else:
+            raise ValueError(f"Wrong batch type: {type(batch)}")
+
         if input_ids is None:
             raise ValueError("dict input to model.forward missing 'input_ids'")
         if attention_mask is None:
@@ -55,6 +69,8 @@ class Model(nn.Module):
 
     def eval(self) -> None:
         # Optional: set your model to evaluation mode
+        self.bert.eval()
+        self.classifier.eval()
         return None
 
     def predict(self, batch: Iterable[Any]) -> List[Any]:
@@ -65,19 +81,22 @@ class Model(nn.Module):
         Returns:
             A list of predictions with the same length as `batch`.
         """
-        inputs = self.tokenizer(
-            batch,  # List of strings
+        texts = [example['text'] for example in batch]
+
+        inputs = _TOKENIZER(
+            texts,  # List of strings
             padding=True,
             truncation=True,
             max_length=128,  # 和 Dataset 保持一致的上限，maybe可以改成64？
             return_tensors="pt"
         )
 
-        device = next(self.model.parameters()).device
+        device = next(self.bert.parameters()).device
         inputs = {key: val.to(device) for key, val in inputs.items()}
 
         with torch.no_grad():
             logits = self.forward(inputs)
+            logits = torch.tensor(logits)
             preds = torch.argmax(logits, dim=-1)
             return preds.tolist()
 
