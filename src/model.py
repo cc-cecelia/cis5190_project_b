@@ -17,16 +17,16 @@ class Model(nn.Module):
     - If you use PyTorch, submit a state_dict to be loaded via `load_state_dict`
     """
 
-    def __init__(self, bert_path: str = None, freeze_encoder: bool = False, dropout_prob: float = 0.1) -> None:
+    def __init__(self, use_dapt: bool = False, freeze_encoder: bool = False, dropout_prob: float = 0.1) -> None:
         # Initialize your model here
         super().__init__()
 
-        if bert_path:
-            # 从huggingface下载
-            self.bert = DistilBertModel.from_pretrained(bert_path)
+        if use_dapt: # 加载用DAPT
+            final_path = "../models/dapt_checkpoints"
         else:
-            # 从本地加载
-            self.bert = DistilBertModel.from_pretrained("distilbert-base-uncased")
+            final_path = "../models/base_checkpoints"
+
+        self.bert = DistilBertModel.from_pretrained(final_path)
 
         hidden_size = self.bert.config.hidden_size  # 768 for distilbert-base
 
@@ -37,9 +37,14 @@ class Model(nn.Module):
             for p in self.bert.parameters():
                 p.requires_grad = False
 
-    def forward(self, batch: Iterable[Any]) -> List[Any]:
-        input_ids = batch.get("input_ids")
-        attention_mask = batch.get("attention_mask")
+    def forward(self, batch) -> List[Any]:
+        device = next(self.parameters()).device
+        if isinstance(batch, dict):
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+        else:
+            raise ValueError(f"Wrong batch type: {type(batch)}")
+
         if input_ids is None:
             raise ValueError("dict input to model.forward missing 'input_ids'")
         if attention_mask is None:
@@ -55,6 +60,8 @@ class Model(nn.Module):
 
     def eval(self) -> None:
         # Optional: set your model to evaluation mode
+        self.bert.eval()
+        self.classifier.eval()
         return None
 
     def predict(self, batch: Iterable[Any]) -> List[Any]:
@@ -78,6 +85,7 @@ class Model(nn.Module):
 
         with torch.no_grad():
             logits = self.forward(inputs)
+            logits = torch.tensor(logits)
             preds = torch.argmax(logits, dim=-1)
             return preds.tolist()
 
