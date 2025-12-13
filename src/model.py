@@ -31,8 +31,8 @@ class Model(nn.Module):
             load_path = dapt_path
         elif not use_dapt and os.path.exists(base_path): # 本地运行
             load_path = base_path
-        else: # 评测机运行
-            load_path = weights_path
+        # 评测机运行
+
         print(f"Initializing model backbone from: {load_path}")
 
         self.bert = DistilBertModel.from_pretrained(load_path)
@@ -81,15 +81,17 @@ class Model(nn.Module):
         Returns:
             A list of predictions with the same length as `batch`.
         """
-        inputs = self.tokenizer(
-            batch,  # List of strings
+        texts = [example['text'] for example in batch]
+
+        inputs = _TOKENIZER(
+            texts,  # List of strings
             padding=True,
             truncation=True,
             max_length=128,  # 和 Dataset 保持一致的上限，maybe可以改成64？
             return_tensors="pt"
         )
 
-        device = next(self.model.parameters()).device
+        device = next(self.bert.parameters()).device
         inputs = {key: val.to(device) for key, val in inputs.items()}
 
         with torch.no_grad():
