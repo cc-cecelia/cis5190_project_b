@@ -18,6 +18,7 @@ def train_dapt():
     # 1. 纯文本数据
     df = pd.read_csv(DATA_PATH)
     text_file = "../data/processed/dapt_titles.txt"
+    os.makedirs(os.path.dirname(text_file), exist_ok=True)
 
     with open(text_file, "w", encoding="utf-8") as f:
         for text in df['title'].dropna():
@@ -67,3 +68,6 @@ def train_dapt():
 
     # if os.path.exists(text_file):
     #     os.remove(text_file)
+
+if __name__ == "__main__":
+    train_dapt()

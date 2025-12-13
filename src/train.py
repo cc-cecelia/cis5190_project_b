@@ -18,9 +18,11 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # 1. Data prepare
-    texts, labels = prepare_data("../data/processed/processed_data.csv")
+    texts, labels = prepare_data("./data/processed/processed_data.csv")
     texts = list(texts)
     labels = list(labels)
+
+
     X_train, X_temp, y_train, y_temp = train_test_split(
         texts, labels, test_size=0.2, random_state=42
     )
@@ -63,7 +65,6 @@ def train():
         for batch in train_loader:
             labels = batch["labels"].to(device)
             logits = model(batch)
-            logits = torch.tensor(logits)
             loss = criterion(logits, labels)
 
             optimizer.zero_grad()
@@ -102,3 +103,7 @@ def train():
     log_name = args.save_name.replace(".pt", ".json")
     with open(os.path.join("../models/logs", log_name), "w") as f:
         json.dump(history, f)
+
+
+if __name__ == "__main__":
+    train()

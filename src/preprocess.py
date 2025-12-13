@@ -187,7 +187,7 @@ class TextDataset(Dataset):
         Tokenize 在这里发生。
         当 DataLoader 取数据时，这里才实时进行分词。
         """
-        text = str(self.texts_tensor[idx].item())
+        text = str(self.texts_tensor[idx].items())
 
         # 标签也从 Tensor 中取出
         label = self.labels_tensor[idx].item()

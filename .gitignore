@@ -12,3 +12,6 @@ venv/
 
 .idea/
 .venv/
+
+# 巨大的checkpoints们
+**/*_checkpoints/
