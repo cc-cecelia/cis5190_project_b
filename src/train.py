@@ -1,7 +1,5 @@
-import argparse
 import torch
 import torch.nn as nn
-from torch.cuda import device
 from torch.utils.data import DataLoader
 from torch.optim.adamw import AdamW
 import json
@@ -9,25 +7,10 @@ import os
 from sklearn.model_selection import train_test_split
 from preprocess import TextDataset,prepare_data
 from transformers import DistilBertTokenizerFast
-from torch.utils.tensorboard import SummaryWriter
 
 from model import Model
-from datetime import datetime
 from util.arg_parser import train_parse_args
-# -------------------
-#   log information
-# -------------------
-# 定义日志保存目录
-LOG_DIR = 'models/logs/'
-# 创建一个带时间戳的子目录，保证每次训练的日志不互相覆盖
-run_name = datetime.now().strftime("%Y%m%d-%H%M%S")
-log_path = os.path.join(LOG_DIR, run_name)
-writer = SummaryWriter(log_path)
-# TensorBoard 会将日志文件写入到这个目录
 
-# ------------------
-# same tokenizer here
-# -------------------
 _TOKENIZER = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
 
 def train():
@@ -52,7 +35,6 @@ def train():
 
     train_loader = DataLoader(train_dataset, args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, args.batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, args.batch_size, shuffle=True)
 
     # 2. Model Initialization
     model = Model(
@@ -117,5 +99,5 @@ def train():
 
     # 保存训练记录 (JSON 文件) 用于画图
     log_name = args.save_name.replace(".pt", ".json")
-    with open(os.path.join("models/logs", log_name), "w") as f:
+    with open(os.path.join("../models/logs", log_name), "w") as f:
         json.dump(history, f)
