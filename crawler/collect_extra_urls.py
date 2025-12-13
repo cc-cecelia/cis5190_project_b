@@ -78,29 +78,32 @@ class ExtraURLCollector:
         
         return clean_url
         
-    def _auto_save_checkpoint(self, articles: List[Dict[str, str]], source: str):
+    def _auto_save_checkpoint(self, all_articles: List[Dict[str, str]]):
         """
-        Auto-save every 500 articles to prevent data loss
+        Auto-save all collected articles (Fox + NBC) to prevent data loss
         
         Args:
-            articles: Current list of collected articles
-            source: 'fox' or 'nbc'
+            all_articles: All collected articles from both Fox and NBC
         """
         import os
         os.makedirs("data/raw", exist_ok=True)
         
-        output_file = "data/raw/extra_crawled_data.csv"
+        output_file = "data/raw/batch2_checkpoint.csv"
         
-        print(f"\n💾 Auto-saving: {len(articles)} articles to {output_file}")
+        fox_count = sum(1 for a in all_articles if a.get('label') == 'fox')
+        nbc_count = sum(1 for a in all_articles if a.get('label') == 'nbc')
+        successful_count = sum(1 for a in all_articles if a.get('status') == 'success')
+        
+        print(f"\n💾 Auto-saving checkpoint: {len(all_articles)} articles to {output_file}")
+        print(f"   Fox: {fox_count} | NBC: {nbc_count} | Success: {successful_count}")
         
         with open(output_file, 'w', encoding='utf-8', newline='') as f:
             fieldnames = ['url', 'title', 'label', 'status']
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(articles)
+            writer.writerows(all_articles)
         
-        successful_count = sum(1 for a in articles if a.get('status') == 'success')
-        print(f"✓ Saved: {len(articles)} articles ({successful_count} successful)")
+        print(f"✓ Checkpoint saved successfully")
         
     def is_valid_article_url(self, url: str, source: str) -> bool:
         """
@@ -392,7 +395,7 @@ class ExtraURLCollector:
         except Exception as e:
             return ""
     
-    def collect_from_section(self, section_url: str, source: str, max_urls: int = 50) -> List[Dict[str, str]]:
+    def collect_from_section(self, section_url: str, source: str, max_urls: int = 200) -> List[Dict[str, str]]:
         """
         Collect URLs and titles from a specific news section
         
@@ -456,159 +459,141 @@ class ExtraURLCollector:
             print(f"  Error collecting from {section_url}: {e}")
             return []
     
-    def collect_fox_news_urls(self, target_count: int = 500) -> List[Dict[str, str]]:
+    def collect_fox_news_urls(self, target_count: int = 500, all_articles: List[Dict[str, str]] = None) -> List[Dict[str, str]]:
         """
-        Collect URLs and titles from Fox News
+        Collect URLs and titles from Fox News sitemap
         
         Args:
-            target_count: Target number of URLs to collect
-            
-        Returns:
-            List of dicts with 'url', 'title', 'label', and 'status' keys
+            target_count: Target number of articles to collect
+            all_articles: Global list to track all articles for periodic checkpointing
         """
         print("\n" + "="*80)
-        print("COLLECTING FOX NEWS URLs AND TITLES")
+        print("COLLECTING FOX NEWS URLs FROM SITEMAP")
         print("="*80)
         
-        # Comprehensive list of Fox News sections
-        fox_sections = [
-            # Main news sections
-            "https://www.foxnews.com/politics",
-            "https://www.foxnews.com/us",
-            "https://www.foxnews.com/world",
-            "https://www.foxnews.com/opinion",
-            
-            # Topical sections
-            "https://www.foxnews.com/us/crime",
-            "https://www.foxnews.com/us/immigration",
-            "https://www.foxnews.com/us/military",
-            "https://www.foxnews.com/us/education",
-            "https://www.foxnews.com/us/economy",
-            
-            # Lifestyle & Culture
-            "https://www.foxnews.com/entertainment",
-            "https://www.foxnews.com/lifestyle",
-            "https://www.foxnews.com/media",
-            "https://www.foxnews.com/health",
-            "https://www.foxnews.com/food-drink",
-            
-            # Science & Tech
-            "https://www.foxnews.com/tech",
-            "https://www.foxnews.com/science",
-            "https://www.foxnews.com/science/air-space",
-            
-            # Sports
-            "https://www.foxnews.com/sports",
-            "https://www.foxnews.com/sports/nfl",
-            "https://www.foxnews.com/sports/nba",
-            
-            # Travel & Outdoors
-            "https://www.foxnews.com/travel",
-            "https://www.foxnews.com/outdoors",
-        ]
+        # Generate Fox News sitemap URLs for 2025
+        # Format: https://www.foxnews.com/html-sitemap/2025/january/4
+        sitemap_urls = []
+        
+        # 2025 months (January to December, up to current date)
+        months_2025 = ['january', 'february', 'march', 'april', 'may', 'june',
+                       'july', 'august', 'september', 'october', 'november', 'december']
+        
+        # Generate daily sitemaps for 2025 (1-31 days per month)
+        for month in months_2025:
+            for day in range(1, 32):  # 1 to 31
+                sitemap_url = f"https://www.foxnews.com/html-sitemap/2025/{month}/{day}"
+                sitemap_urls.append(sitemap_url)
+        
+        # Also add late 2024 for more data (November and December)
+        # months_2024 = ['november', 'december']
+        # for month in months_2024:
+        #     for day in range(1, 32):
+        #         sitemap_url = f"https://www.foxnews.com/html-sitemap/2024/{month}/{day}"
+        #         sitemap_urls.append(sitemap_url)
+        
+        print(f"Generated {len(sitemap_urls)} sitemap URLs to crawl")
+        
+        # Shuffle to get diverse content
+        random.shuffle(sitemap_urls)
         
         collected = []
         
-        for section_url in fox_sections:
+        for sitemap_url in sitemap_urls:
             if len(collected) >= target_count:
                 break
             
-            print(f"\nSection: {section_url.split('foxnews.com/')[-1]}")
-            articles = self.collect_from_section(section_url, 'fox', max_urls=50)
+            sitemap_name = sitemap_url.split('html-sitemap/')[-1]
+            print(f"\nSitemap: {sitemap_name}")
+            
+            # Collect from sitemap (no max_urls limit per sitemap, collect all available)
+            articles = self.collect_from_section(sitemap_url, 'fox', max_urls=500)
             
             for article in articles:
                 if len(collected) >= target_count:
                     break
-                collected.append(article)  # Already has url, title, label, status
+                collected.append(article)
                 
-                # Auto-save every 500 articles
-                if len(collected) % 500 == 0:
-                    self._auto_save_checkpoint(collected, 'fox')
+                # Add to global list and checkpoint every 500 articles
+                if all_articles is not None:
+                    all_articles.append(article)
+                    if len(all_articles) % 500 == 0:
+                        self._auto_save_checkpoint(all_articles)
             
-            # Be polite - delay between requests
-            time.sleep(random.uniform(1.5, 2.5))
+            time.sleep(random.uniform(2.0, 3.5))
         
         print(f"\nTotal Fox News URLs collected: {len(collected)}")
         return collected
     
-    def collect_nbc_news_urls(self, target_count: int = 500) -> List[Dict[str, str]]:
+    def collect_nbc_news_urls(self, target_count: int = 500, all_articles: List[Dict[str, str]] = None) -> List[Dict[str, str]]:
         """
-        Collect URLs and titles from NBC News
+        Collect URLs and titles from NBC News archive
         
         Args:
-            target_count: Target number of URLs to collect
-            
-        Returns:
-            List of dicts with 'url', 'title', 'label', and 'status' keys
+            target_count: Target number of articles to collect
+            all_articles: Global list to track all articles for periodic checkpointing
         """
         print("\n" + "="*80)
-        print("COLLECTING NBC NEWS URLs AND TITLES")
+        print("COLLECTING NBC NEWS URLs FROM ARCHIVE")
         print("="*80)
         
-        # Comprehensive list of NBC News sections
-        nbc_sections = [
-            # Main news sections
-            "https://www.nbcnews.com/politics",
-            "https://www.nbcnews.com/us-news",
-            "https://www.nbcnews.com/world",
-            
-            # Topical sections
-            "https://www.nbcnews.com/us-news/crime-courts",
-            "https://www.nbcnews.com/politics/immigration",
-            "https://www.nbcnews.com/politics/congress",
-            "https://www.nbcnews.com/politics/white-house",
-            "https://www.nbcnews.com/politics/2024-election",
-            
-            # Business & Economy
-            "https://www.nbcnews.com/business",
-            "https://www.nbcnews.com/business/economy",
-            "https://www.nbcnews.com/business/personal-finance",
-            
-            # Health & Science
-            "https://www.nbcnews.com/health",
-            "https://www.nbcnews.com/science",
-            "https://www.nbcnews.com/health/mental-health",
-            
-            # Tech & Innovation
-            "https://www.nbcnews.com/tech",
-            "https://www.nbcnews.com/tech/tech-news",
-            "https://www.nbcnews.com/tech/security",
-            
-            # Social & Culture
-            "https://www.nbcnews.com/news/latino",
-            "https://www.nbcnews.com/news/asian-america",
-            "https://www.nbcnews.com/news/investigations",
-            "https://www.nbcnews.com/news/education",
-            "https://www.nbcnews.com/news/military",
-            
-            # Environment & Climate
-            "https://www.nbcnews.com/science/environment",
-            "https://www.nbcnews.com/science/climate",
-        ]
+        # Generate NBC News archive URLs for 2024-2025
+        # Format: https://www.nbcnews.com/archive/articles/2024/november
+        # NBC has page 1 (base URL) and page 2 (/2)
+        archive_urls = []
+        
+        # 2025 months
+        months_2025 = ['january', 'february', 'march', 'april', 'may', 'june',
+                       'july', 'august', 'september', 'october', 'november', 'december']
+        
+        for month in months_2025:
+            # Page 1 (base URL) - though you said it's often empty, we'll try it
+            archive_urls.append(f"https://www.nbcnews.com/archive/articles/2025/{month}")
+            # Page 2
+            archive_urls.append(f"https://www.nbcnews.com/archive/articles/2025/{month}/2")
+        
+        # 2024 months (all 12 months for more data)
+        # months_2024 = ['january', 'february', 'march', 'april', 'may', 'june',
+        #                'july', 'august', 'september', 'october', 'november', 'december']
+        
+        # for month in months_2024:
+        #     archive_urls.append(f"https://www.nbcnews.com/archive/articles/2024/{month}")
+        #     archive_urls.append(f"https://www.nbcnews.com/archive/articles/2024/{month}/2")
+        
+        print(f"Generated {len(archive_urls)} archive URLs to crawl")
+        
+        # Shuffle for diversity
+        random.shuffle(archive_urls)
         
         collected = []
         
-        for section_url in nbc_sections:
+        for archive_url in archive_urls:
             if len(collected) >= target_count:
                 break
             
-            print(f"\nSection: {section_url.split('nbcnews.com/')[-1]}")
-            articles = self.collect_from_section(section_url, 'nbc', max_urls=50)
+            archive_name = archive_url.split('archive/articles/')[-1]
+            print(f"\nArchive: {archive_name}")
+            
+            # Collect from archive (no max_urls limit per page, collect all available)
+            articles = self.collect_from_section(archive_url, 'nbc', max_urls=500)
             
             for article in articles:
                 if len(collected) >= target_count:
                     break
-                collected.append(article)  # Already has url, title, label, status
+                collected.append(article)
                 
-                # Auto-save every 500 articles
-                if len(collected) % 500 == 0:
-                    self._auto_save_checkpoint(collected, 'nbc')
+                # Add to global list and checkpoint every 500 articles
+                if all_articles is not None:
+                    all_articles.append(article)
+                    if len(all_articles) % 500 == 0:
+                        self._auto_save_checkpoint(all_articles)
             
-            # Be polite - delay between requests
-            time.sleep(random.uniform(1.5, 2.5))
+            time.sleep(random.uniform(2.0, 3.5))
         
         print(f"\nTotal NBC News URLs collected: {len(collected)}")
         return collected
+    
+    
     
     def save_to_csv(self, urls: List[Dict[str, str]], output_file: str):
         """
@@ -692,8 +677,8 @@ def main():
     # Files to check for existing URLs (to avoid duplicates)
     existing_files = [
         'data/raw/urls_initial.csv',           # Original URLs from teacher
-        'data/raw/urls_collected_extra.csv',   # Previous extra collection
-        'data/processed/crawled_data.csv',     # Already crawled data
+        'data/raw/batch1_urls_collected_extra.csv',   # Previous extra collection 
+        'data/processed/crawled_data.csv',   # Previous extra collection
     ]
     
     print("="*80)
@@ -713,11 +698,26 @@ def main():
     print(f"Target: {fox_target} Fox News + {nbc_target} NBC News")
     print("="*80)
     
-    fox_articles = collector.collect_fox_news_urls(target_count=fox_target)
-    nbc_articles = collector.collect_nbc_news_urls(target_count=nbc_target)
+    # Track all articles globally for proper checkpointing (every 500 articles)
+    all_articles = []
     
-    # Combine all articles
-    all_articles = fox_articles + nbc_articles
+    # Collect Fox News articles
+    print("\n--- Collecting Fox News articles ---")
+    fox_articles = collector.collect_fox_news_urls(target_count=fox_target, all_articles=all_articles)
+    
+    # Save checkpoint after Fox collection
+    if all_articles:
+        collector._auto_save_checkpoint(all_articles)
+        print(f"✓ Checkpoint saved after Fox collection: {len(all_articles)} total articles")
+    
+    # Collect NBC News articles
+    print("\n--- Collecting NBC News articles ---")
+    nbc_articles = collector.collect_nbc_news_urls(target_count=nbc_target, all_articles=all_articles)
+    
+    # Save final checkpoint after NBC collection
+    if all_articles:
+        collector._auto_save_checkpoint(all_articles)
+        print(f"✓ Final checkpoint saved: {len(all_articles)} total articles")
     
     # Count successes and failures
     successful = [a for a in all_articles if a.get('status') == 'success']
@@ -747,11 +747,11 @@ def main():
     print("="*80)
     
     # 1. Save URLs only (for compatibility)
-    urls_file = "data/raw/urls_collected_extra.csv"
+    urls_file = "data/raw/batch2_urls_collected_extra.csv"
     collector.save_to_csv(all_articles, urls_file)
     
     # 2. Save full crawled data with titles (matches format of crawled_data.csv)
-    crawled_file = "data/raw/extra_crawled_data.csv"
+    crawled_file = "data/processed/batch2_extra_crawled_data.csv"
     collector.save_crawled_data(all_articles, crawled_file)
     
     print("\n" + "="*80)
