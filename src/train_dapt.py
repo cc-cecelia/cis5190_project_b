@@ -1,7 +1,4 @@
-import argparse
-import os
 import torch
-from torchgen.static_runtime.generator import generate_test_value_names
 from transformers import (
     DistilBertTokenizerFast,
     DistilBertForMaskedLM,
