@@ -63,6 +63,7 @@ def train():
         for batch in train_loader:
             labels = batch["labels"].to(device)
             logits = model(batch)
+            logits = torch.tensor(logits)
             loss = criterion(logits, labels)
 
             optimizer.zero_grad()
@@ -83,7 +84,7 @@ def train():
             for batch in val_loader:
                 labels = batch["labels"].to(device)
                 logits = model(batch)
-
+                logits = torch.tensor(logits)
                 preds = torch.argmax(logits, dim=-1)
                 correct += (preds == labels).sum().item()
                 total += labels.size(0)
