@@ -38,23 +38,23 @@ python train.py --save_name model_base.pt
 python train.py --use_dapt --save_name model_dapt.pt --batch_size 16 --epochs 3
 
 # 使用 DAPT 权重并冻结编码器训练 (只训练分类头)
-python train.py --use_dapt --freeze_encoder --save_name model_dapt_lr1e5_ep_10_frozen.pt --epochs 10 --lr 1e-5
+python train.py --use_dapt --freeze_encoder --epochs 10 --lr 1e-5
 
 # 剩下的可以自行组合，注意model save命名，如果不是默认参数，就要写上具体内容
 ```
 
 **核心参数说明:**
 
-| 参数 | 默认值 | 描述                                                 |
-| :--- | :--- |:---------------------------------------------------|
-| `--use_dapt` | `False` | **(Flag)** 使用 DAPT 预训练的权重 (需要先运行 `train_dapt.py`)。 |
+| 参数                 | 默认值     | 描述                                                 |
+|:-------------------|:--------|:---------------------------------------------------|
+| `--use_dapt`       | `False` | **(Flag)** 使用 DAPT 预训练的权重 (需要先运行 `train_dapt.py`)。 |
 | `--freeze_encoder` | `False` | **(Flag)** 冻结 BERT 编码器层，只训练顶部的分类头。                 |
-| `--lr` | `2e-5` | 学习率 (Learning Rate)。                               |
-| `--dropout` | `0.1` | 分类头中的 Dropout 概率。                                  |
-| `--batch_size` | `16` | 训练批次大小 (Batch Size)。                               |
-| `--epochs` | `3` | 训练轮数。                                              |
-| `--save_name` | **(必须)** | 保存的模型文件名，如 `model_base.pt`。                        |
- | `--checkpoint` | None | dapt模型backbone的名字，如`dapt_lr2e-5_ep3` 普通base不用写。    |            |                                         |                                         |
+| `--lr`             | `2e-5`  | 学习率 (Learning Rate)。                               |
+| `--dropout`        | `0.1`   | 分类头中的 Dropout 概率。                                  |
+| `--batch_size`     | `16`    | 训练批次大小 (Batch Size)。                               |
+| `--epochs`         | `3`     | 训练轮数。                                              |
+| `--memo`           | None    | 如果需要的话，在模型最后加上备注                                   |
+ | `--checkpoint`     | None    | dapt模型backbone的名字，如`dapt_lr2e-5_ep3` 普通base不用写。    |                                                |                                         |
 -----
 
 ### 3\. 模型评估

@@ -10,9 +10,9 @@ from transformers import (
 )
 from transformers import LineByLineTextDataset
 import pandas as pd
-from util.arg_parser import test_parse_args
+from util.arg_parser import datp_parse_args
 
-args = test_parse_args()
+args = datp_parse_args()
 
 DATA_PATH = "data/processed/processed_data.csv"
 OUTPUT_DIR = f"models/dapt_checkpoints/dapt_lr{args.lr}_ep{args.epochs}"
@@ -52,7 +52,7 @@ def train_dapt():
         learning_rate=args.lr,
         weight_decay=0.01,
         fp16=torch.cuda.is_available(),  # 如果有 GPU 开启混合精度加速
-        logging_dir=f'models/logs/dapt_lr{args.lr}_ep{args.epochs}_log',
+        logging_dir=f'../models/logs/dapt_lr{args.lr}_ep{args.epochs}_logs',
     )
 
     trainer = Trainer(

@@ -10,15 +10,31 @@ from transformers import DistilBertTokenizerFast
 
 from model import Model
 from util.arg_parser import train_parse_args
+import config
 
-_TOKENIZER = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
+_TOKENIZER = DistilBertTokenizerFast.from_pretrained(config.BERT)
+
+def generate_name(args):
+    # model_dapt_lr1e5_ep10_frozen.pt
+    name = "model"
+    if args.use_dapt:
+        name += "_" + args.checkpoint + "_FT"
+    else:
+        name += "_base"
+    name += f"_lr{args.lr}_batch_{args.batch_size}_dr{args.dropout}_ep{args.epochs}"
+    if args.freeze_encoder:
+        name += "_frozen"
+    if args.memo is not None:
+        name += args.memo
+    name += ".pt"
+    return name
 
 def train():
     args = train_parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # 1. Data prepare
-    texts, labels = prepare_data("./data/processed/processed_data.csv") #TODO：可能线上提交以后就会变得奇怪？也许应该写个大的Config把这些地址都存进去方便修改
+    texts, labels = prepare_data(config.PROCESSED_DATA)
     texts = list(texts)
     labels = list(labels)
 
@@ -96,17 +112,16 @@ def train():
         print(f"Epoch {epoch + 1}/{args.epochs} | Loss: {avg_loss:.4f} | Val Acc: {val_acc:.4f}")
 
     # 4. saving
-    save_path = "models/weights"
-    os.makedirs(save_path, exist_ok=True)
-
-    save_path = os.path.join(save_path, args.save_name)
+    os.makedirs(config.MODELS_WEIGHTS_DIR, exist_ok=True)
+    save_name = generate_name(args)
+    save_path = config.MODELS_WEIGHTS_DIR / save_name
     torch.save(model.state_dict(), save_path)
 
     print(f"Model weights saved to {save_path}")
 
     # 保存训练记录 (JSON 文件) 用于画图
     log_name = args.save_name.replace(".pt", ".json")
-    with open(os.path.join("./models/logs", log_name), "w") as f:
+    with open(config.MODELS_LOG_DIR / log_name, "w") as f:
         json.dump(history, f)
 
 

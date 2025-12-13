@@ -4,18 +4,19 @@ import torch
 from torch.utils.data import DataLoader
 from transformers import DistilBertTokenizerFast
 
+import config
 from model import Model
 from util.arg_parser import test_parse_args
 from preprocess import prepare_data, TextDataset
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
-_TOKENIZER_NAME = "distilbert-base-uncased"
+_TOKENIZER_NAME = config.BERT
 
 args = test_parse_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-texts, labels = prepare_data("../data/processed/processed_data.csv")
+texts, labels = prepare_data(config.PROCESSED_DATA)
 
 _, X_temp, _, y_temp = train_test_split(
     texts, labels, test_size=0.2, random_state=42

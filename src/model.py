@@ -4,8 +4,10 @@ from typing import Any, Iterable, List
 from transformers import DistilBertModel, DistilBertTokenizerFast
 import os
 
-_TOKENIZER = DistilBertTokenizerFast.from_pretrained("distilbert-base-uncased")
-backbone_base = "models/"
+import config
+
+_TOKENIZER = DistilBertTokenizerFast.from_pretrained(config.BERT)
+backbone_base = config.MODELS_DIR
 
 class Model(nn.Module):
     """
@@ -24,17 +26,17 @@ class Model(nn.Module):
         super().__init__()
 
         if use_dapt:
-            path = os.path.join(backbone_base,"dapt_checkpoints", checkpoint)
+            path = config.MODELS_DAPT_CPS / checkpoint
             if os.path.exists(path):
                 load_path = path # 本地 用指定的dapt backbone
             else:
-                load_path = "distilbert-base-uncased" # 非本地，fallback到 plain bert backbone
+                load_path = config.BERT # 非本地，fallback到 plain bert backbone
         else:
-            path = os.path.join(backbone_base, "base_checkpoints")
+            path = config.MODELS_BASE_CPS
             if os.path.exists(path):
                 load_path = path # 本地 不用dapt 免下载
             else:
-                load_path = "distilbert-base-uncased" # 管你本不本地，直接plain bert backbone
+                load_path = config.BERT # 管你本不本地，直接plain bert backbone
 
         print(f"Initializing model backbone from: {load_path}")
 

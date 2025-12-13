@@ -11,7 +11,7 @@ def train_parse_args():
     parser.add_argument("--batch_size", type=int, default=16, help="Batch Size")
     parser.add_argument("--epochs", type=int, default=3, help="训练轮数")
 
-    parser.add_argument("--save_name", type=str, required=True, help="保存模型的名字，例如 model_dapt_lr2e5.pt 或 model_base_lr2e5_ep10")
+    parser.add_argument("--memo", type=str, default=None, help="模型备注")
 
     return parser.parse_args()
 
