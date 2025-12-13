@@ -5,6 +5,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, log_loss
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
 
 input_dir = "./data/processed/processed_data.csv"
 log_dir = "./src/models/logs"
@@ -15,7 +20,7 @@ def main(df, tf=True, max_iter=100):
     y = df["label"]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=0
+        X, y, test_size=0.2, random_state=42
     )
 
     y_train = y_train.apply(lambda x: 1 if x == "fox" else 0)
@@ -38,12 +43,14 @@ def main(df, tf=True, max_iter=100):
     )
 
     train_losses = []
+    current_iter = []
 
     for i in range(max_iter):
         model.fit(X_train_vec, y_train)
         prob = model.predict_proba(X_train_vec)
         loss = log_loss(y_train, prob)
         train_losses.append(loss)
+        current_iter.append(i)
 
     y_pred = model.predict(X_test_vec)
     accuracy = accuracy_score(y_test, y_pred)
@@ -59,6 +66,7 @@ def main(df, tf=True, max_iter=100):
         json.dump(
             {
                 "feature_type": feature_type,
+                "current_iter": current_iter,
                 "max_iter": max_iter,
                 "train_loss": train_losses,
             },
