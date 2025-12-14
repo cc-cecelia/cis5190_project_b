@@ -7,7 +7,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
-PROCESSED_DATA = PROCESSED_DATA_DIR / "processed_data.csv"
+PROCESSED_DATA = PROCESSED_DATA_DIR / "processed_data_merged.csv"
 INITIAL_URLS = RAW_DATA_DIR / "urls_initial.csv"
 CRAWLED_DATA = PROCESSED_DATA / "crawled_data.csv"
 
