@@ -1,4 +1,3 @@
-import os
 import torch
 from transformers import (
     DistilBertTokenizerFast,
@@ -9,17 +8,13 @@ from transformers import (
 )
 from transformers import LineByLineTextDataset
 import pandas as pd
+from util.generate_name import modify_if_exists
 from util.arg_parser import datp_parse_args
+
+import sys
+sys.path.append("..")
 import config
-
-
-def generate_name():
-    name = "dapt"
-    if args.lr != config.LR:
-        name += "_" + args.lr
-    if args.epochs != config.EPOCHS:
-        name += "_" + args.epochs
-    return name
+from util.generate_name import generate_dapt_ckp_name
 
 def train_dapt(output_dir):
     # 1. 纯文本数据
@@ -43,11 +38,13 @@ def train_dapt(output_dir):
         tokenizer=tokenizer, mlm=True, mlm_probability=0.15
     )
 
+    whole_ckpt = output_dir.parent / (output_dir.name + "_full")
+    whole_ckpt = modify_if_exists(whole_ckpt)
     training_args = TrainingArguments(
-        output_dir=output_dir,
+        output_dir=whole_ckpt,
         overwrite_output_dir=True,
         num_train_epochs=args.epochs,  # 3-5 个 epoch
-        per_device_train_batch_size=16,
+        per_device_train_batch_size=args.batch_size,
         save_steps=10_000,
         save_total_limit=2,
         prediction_loss_only=True,  # 我们只需要降低 Loss，不需要准确率
@@ -68,14 +65,14 @@ def train_dapt(output_dir):
     trainer.train()
 
     # 保存最终模型骨架
-    print(f"Saving DAPT model to {output_dir}...")
-    if os.path.exists(output_dir):
-        output_dir = output_dir + "_temp"
-    trainer.save_model(output_dir)
-    tokenizer.save_pretrained(output_dir)
+    backbone = output_dir.parent / (output_dir.name + "_backbone")
+    print(f"Saving DAPT model to {backbone}...")
+    backbone = modify_if_exists(backbone)
+    trainer.save_model(backbone)
+    tokenizer.save_pretrained(backbone)
 
 if __name__ == "__main__":
     args = datp_parse_args()
-    name = generate_name()
+    name = generate_dapt_ckp_name(args)
     output_dir = config.MODELS_DAPT_CPS / name
     train_dapt(output_dir)

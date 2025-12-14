@@ -4,6 +4,8 @@ from typing import Any, Iterable, List
 from transformers import DistilBertModel, DistilBertTokenizerFast
 import os
 
+import sys
+sys.path.append("..")
 import config
 
 _TOKENIZER = DistilBertTokenizerFast.from_pretrained(config.BERT)
@@ -46,10 +48,10 @@ class Model(nn.Module):
 
         self.dropout = nn.Dropout(dropout_prob)
         self.classifier = nn.Linear(hidden_size, 2) # 分类头
-
-        if freeze_encoder: # 仅训练头
-            for p in self.bert.parameters():
-                p.requires_grad = False
+        self.frozen = freeze_encoder
+        # if freeze_encoder: # 仅训练头
+        #     for p in self.bert.parameters():
+        #         p.requires_grad = False
 
     def forward(self, batch) -> List[Any]:
         device = next(self.parameters()).device

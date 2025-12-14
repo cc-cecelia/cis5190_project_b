@@ -2,6 +2,11 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 
+DATA_FILES_MAP = {
+    3800: "processed_data.csv",
+    15000: "processed_data_merged.csv",
+} # TODO：以后再说哈
+
 # --- 数据路径配置（使用绝对路径）---
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -25,11 +30,5 @@ BEST_MODEL_WEIGHTS = MODELS_WEIGHTS_DIR / "model.pt"
 REPORT_PATH = "final_report.pdf"
 FIGURES_DIR = PROJECT_ROOT / "figures"
 EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
-
-# --- 默认参数
-LR = 2e-5
-DROPOUT = 0.5
-BATCH_SIZE = 16
-EPOCHS = 3
 
 BERT = "distilbert-base-uncased"
