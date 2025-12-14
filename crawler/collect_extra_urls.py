@@ -88,7 +88,7 @@ class ExtraURLCollector:
         import os
         os.makedirs("data/raw", exist_ok=True)
         
-        output_file = "data/raw/batch2_checkpoint.csv"
+        output_file = "data/raw/batch4_checkpoint.csv"
         
         fox_count = sum(1 for a in all_articles if a.get('label') == 'fox')
         nbc_count = sum(1 for a in all_articles if a.get('label') == 'nbc')
@@ -471,26 +471,19 @@ class ExtraURLCollector:
         print("COLLECTING FOX NEWS URLs FROM SITEMAP")
         print("="*80)
         
-        # Generate Fox News sitemap URLs for 2025
-        # Format: https://www.foxnews.com/html-sitemap/2025/january/4
+        # Generate Fox News sitemap URLs for 2023
+        # Format: https://www.foxnews.com/html-sitemap/2023/january/4
         sitemap_urls = []
         
-        # 2025 months (January to December, up to current date)
-        months_2025 = ['january', 'february', 'march', 'april', 'may', 'june',
+        # 2023 months (all 12 months)
+        months_2023 = ['january', 'february', 'march', 'april', 'may', 'june',
                        'july', 'august', 'september', 'october', 'november', 'december']
         
-        # Generate daily sitemaps for 2025 (1-31 days per month)
-        for month in months_2025:
+        # Generate daily sitemaps for 2023 (1-31 days per month)
+        for month in months_2023:
             for day in range(1, 32):  # 1 to 31
-                sitemap_url = f"https://www.foxnews.com/html-sitemap/2025/{month}/{day}"
+                sitemap_url = f"https://www.foxnews.com/html-sitemap/2023/{month}/{day}"
                 sitemap_urls.append(sitemap_url)
-        
-        # Also add late 2024 for more data (November and December)
-        # months_2024 = ['november', 'december']
-        # for month in months_2024:
-        #     for day in range(1, 32):
-        #         sitemap_url = f"https://www.foxnews.com/html-sitemap/2024/{month}/{day}"
-        #         sitemap_urls.append(sitemap_url)
         
         print(f"Generated {len(sitemap_urls)} sitemap URLs to crawl")
         
@@ -537,28 +530,20 @@ class ExtraURLCollector:
         print("COLLECTING NBC NEWS URLs FROM ARCHIVE")
         print("="*80)
         
-        # Generate NBC News archive URLs for 2024-2025
-        # Format: https://www.nbcnews.com/archive/articles/2024/november
+        # Generate NBC News archive URLs for 2023
+        # Format: https://www.nbcnews.com/archive/articles/2023/november
         # NBC has page 1 (base URL) and page 2 (/2)
         archive_urls = []
         
-        # 2025 months
-        months_2025 = ['january', 'february', 'march', 'april', 'may', 'june',
+        # 2023 months (all 12 months)
+        months_2023 = ['january', 'february', 'march', 'april', 'may', 'june',
                        'july', 'august', 'september', 'october', 'november', 'december']
         
-        for month in months_2025:
-            # Page 1 (base URL) - though you said it's often empty, we'll try it
-            archive_urls.append(f"https://www.nbcnews.com/archive/articles/2025/{month}")
+        for month in months_2023:
+            # Page 1 (base URL)
+            archive_urls.append(f"https://www.nbcnews.com/archive/articles/2023/{month}")
             # Page 2
-            archive_urls.append(f"https://www.nbcnews.com/archive/articles/2025/{month}/2")
-        
-        # 2024 months (all 12 months for more data)
-        # months_2024 = ['january', 'february', 'march', 'april', 'may', 'june',
-        #                'july', 'august', 'september', 'october', 'november', 'december']
-        
-        # for month in months_2024:
-        #     archive_urls.append(f"https://www.nbcnews.com/archive/articles/2024/{month}")
-        #     archive_urls.append(f"https://www.nbcnews.com/archive/articles/2024/{month}/2")
+            archive_urls.append(f"https://www.nbcnews.com/archive/articles/2023/{month}/2")
         
         print(f"Generated {len(archive_urls)} archive URLs to crawl")
         
@@ -747,11 +732,11 @@ def main():
     print("="*80)
     
     # 1. Save URLs only (for compatibility)
-    urls_file = "data/raw/batch2_urls_collected_extra.csv"
+    urls_file = "data/raw/batch4_urls_collected_extra.csv"
     collector.save_to_csv(all_articles, urls_file)
     
     # 2. Save full crawled data with titles (matches format of crawled_data.csv)
-    crawled_file = "data/processed/batch2_extra_crawled_data.csv"
+    crawled_file = "data/processed/batch4_extra_crawled_data.csv"
     collector.save_crawled_data(all_articles, crawled_file)
     
     print("\n" + "="*80)
