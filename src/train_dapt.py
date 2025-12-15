@@ -16,10 +16,10 @@ sys.path.append("..")
 import config
 from util.generate_name import generate_dapt_ckp_name
 
-def train_dapt(output_dir):
+def train_dapt(output_dir, csv_name = "processed_data.csv"):
     # 1. 纯文本数据
-    df = pd.read_csv(config.PROCESSED_DATA)
-    text_file = config.PROCESSED_DATA_DIR / "dapt_titles.txt"
+    df = pd.read_csv(config.PROCESSED_DIR / csv_name)
+    text_file = config.PROCESSED_DIR / "dapt_titles.txt"
 
     with open(text_file, "w", encoding="utf-8") as f:
         for text in df['title'].dropna():
@@ -75,4 +75,5 @@ if __name__ == "__main__":
     args = datp_parse_args()
     name = generate_dapt_ckp_name(args)
     output_dir = config.MODELS_DAPT_CPS / name
-    train_dapt(output_dir)
+
+    train_dapt(output_dir, args.csv_name)

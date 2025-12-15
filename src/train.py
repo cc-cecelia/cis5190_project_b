@@ -25,7 +25,7 @@ def train():
     print("device:", device)
     # 1. Data prepare
     print("Preparing data...")
-    texts, labels = prepare_data(config.PROCESSED_DATA)
+    texts, labels = prepare_data(config.PROCESSED_DIR / args.csv_name)
     texts = list(texts)
     labels = list(labels)
 

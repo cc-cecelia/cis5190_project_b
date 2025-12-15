@@ -87,30 +87,34 @@ def main():
     # ==========================================
     # 策略：冻结 Encoder，只训练 Classifier
     # 注意：Frozen 模式下，warmup 参数必须传
-    for batch_size in [8, 16, 32, 64]:
-        for dropout in [0.1, 0.3, 0.5]:
-            run_command(
-                "python train.py --freeze_encoder --warm_lr 2e-5 --batch_size 16 --warm_ep 5 --dropout 0.1 --memo \"15k\"",
-                f"01_exp1_frozen_baseline_bs{batch_size}_do{str(int(dropout*10))}"
-            )
+    # for batch_size in [8, 16, 32, 64]:
+    #     for dropout in [0.1, 0.3, 0.5]:
+    #         run_command(
+    #             "python train.py --freeze_encoder --warm_lr 2e-5 --batch_size 16 --warm_ep 5 --dropout 0.1 --memo \"15k\"",
+    #             f"01_exp1_frozen_baseline_bs{batch_size}_do{str(int(dropout*10))}"
+    #         )
+
+    # best_batch = 16 #
+    # best_dropout = 0.1 #
 
     # ==========================================
     # 3. DAPT Phase (Pre-training)
     # ==========================================
     # 这是 Exp 2 和 Exp 4 的前置条件 DONE
-    # run_command(
-    #     "python train_dapt.py --lr 3e-5 --batch_size 16 --epochs 3 --memo \"15k\"",
-    #     "02_dapt_pretraining"
-    # )
+    run_command(
+        "python train_dapt.py --lr 3e-5 --batch_size 16 --epochs 3 --memo \"large\" --csv_name processed_data_large.csv",
+        "02_dapt_pretraining"
+    )
 
     # ==========================================
     # 4. Exp 2: DistilBERT + DAPT (Frozen)
     # ==========================================
     # 策略：加载 DAPT 权重，但依然冻结 Encoder
-    run_command(
-        "python train.py --use_dapt --checkpoint dapt_lr3e5_ep3_15k_backbone --freeze_encoder --warm_lr 1e-4 --batch_size 16 --warm_ep 5 --dropout 0.1 --memo \"15k\"",
-        "03_exp2_dapt_frozen"
-    )
+    # for warm_lr in [1e-5, 2e-5, 3e-5]:
+    #     run_command(
+    #         f"python train.py --use_dapt --checkpoint dapt_lr3e5_ep3_15k_backbone --freeze_encoder --warm_lr {warm_lr} --batch_size {best_batch} --warm_ep 5 --dropout {best_dropout} --memo \"15k\"",
+    #         f"03_exp2_dapt_frozen_{warm_lr}"
+    #     )
 
     # ==========================================
     # 5. Exp 3: DistilBERT (Two-Stage Fine-tuning)
@@ -119,7 +123,7 @@ def main():
     # 阶段1: 3轮 Warmup (lr=1e-4)
     # 阶段2: 5轮 Full FT (lr=2e-5)
     # run_command(
-    #     "python train.py --bert_lr 2e-5 --warm_lr 1e-4 --warm_ep 3 --bert_ep 5 --batch_size 16 --dropout 0.1 --memo \"15k\"",
+    #     "python train.py --bert_lr 2e-5 --warm_lr 1e-4 --warm_ep 3 --bert_ep 5 --batch_size 16 --dropout 0.1 --memo \"3k8\"",
     #     "04_exp3_finetune_twostage"
     # )
 
@@ -130,7 +134,7 @@ def main():
     # 阶段1: 3轮 Warmup (lr=1e-4)
     # 阶段2: 5轮 Full FT (lr=2e-5)
     run_command(
-        "python train.py --use_dapt --checkpoint dapt_lr3e5_ep3_15k_backbone --bert_lr 2e-5 --warm_lr 1e-4 --warm_ep 3 --bert_ep 5 --batch_size 16 --dropout 0.1  --memo \"15k\"",
+        "python train.py --use_dapt --checkpoint dapt_lr3e05_ep3_large_backbone --bert_lr 2e-5 --warm_lr 1e-4 --warm_ep 3 --bert_ep 5 --batch_size 16 --dropout 0.1  --memo \"large\" --csv_name processed_data_large.csv",
         "05_exp4_dapt_finetune_twostage"
     )
 

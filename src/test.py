@@ -3,20 +3,23 @@ import os
 import torch
 from torch.utils.data import DataLoader
 from transformers import DistilBertTokenizerFast
-
-import config
 from model import Model
 from util.arg_parser import test_parse_args
 from preprocess import prepare_data, TextDataset
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
+import sys
+sys.path.append("..")
+import config
+
+
 _TOKENIZER_NAME = config.BERT
 
 args = test_parse_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-texts, labels = prepare_data(config.PROCESSED_DATA)
+texts, labels = prepare_data(config.PROCESSED_DIR / args.csv_name)
 
 _, X_temp, _, y_temp = train_test_split(
     texts, labels, test_size=0.2, random_state=42
@@ -32,12 +35,16 @@ test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False
 
 model = Model(
     use_dapt=args.use_dapt,
-    freeze_encoder=args.freeze_encoder
+    # freeze_encoder=args.freeze_encoder,
 )
-if not os.path.exists(args.model_path):
-    raise FileNotFoundError(f"Model file not found at {args.model_path}")
+model_name = args.model_name
 
-state_dict = torch.load(args.model_path, map_location=device)
+model_path = (config.MODELS_WEIGHTS_DIR / model_name).with_suffix('.pt')
+
+if not os.path.exists(model_path):
+    raise FileNotFoundError(f"Model file not found at {model_path}")
+
+state_dict = torch.load(model_path, map_location=device)
 model.load_state_dict(state_dict)
 
 model.to(device)

@@ -32,7 +32,9 @@ class Model(nn.Module):
             if os.path.exists(path):
                 load_path = path # 本地 用指定的dapt backbone
             else:
+                print(f"path is {path}")
                 load_path = config.BERT # 非本地，fallback到 plain bert backbone
+
         else:
             path = config.MODELS_BASE_CPS
             if os.path.exists(path):
