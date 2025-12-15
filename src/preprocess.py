@@ -211,12 +211,45 @@ class TextDataset(Dataset):
             'labels': torch.tensor(label, dtype=torch.long)
         }
 
+def extract_title_from_url(url: str) -> str:
+    """
+    Extract title from URL by taking the last part of the path
+    and converting it to readable text
+    
+    Args:
+        url: Full URL string
+        
+    Returns:
+        Extracted and cleaned title
+    """
+    # Get the last part of the URL path
+    # Example: https://www.foxnews.com/politics/biden-signs-bill -> "biden-signs-bill"
+    
+    # Remove query parameters and fragments
+    url = url.split('?')[0].split('#')[0]
+    
+    # Get the last part of the path
+    parts = url.rstrip('/').split('/')
+    title_part = parts[-1] if parts else ""
+    
+    # Remove common file extensions
+    title_part = re.sub(r'\.(html|htm|php|aspx|jsp|print)$', '', title_part, flags=re.IGNORECASE)
+    
+    # Remove NBC article IDs (like rcna224175)
+    title_part = re.sub(r'-rcna\d+$', '', title_part)
+    
+    # Convert hyphens and underscores to spaces
+    title = title_part.replace('-', ' ').replace('_', ' ')
+    
+    return title
+
+
 def prepare_data(path: str) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Load and preprocess data from CSV
     
     Args:
-        path: Path to CSV file with 'title' and 'label' columns
+        path: Path to CSV file with 'url' column (label is inferred from URL domain)
         normalize: Whether to apply full text normalization (lowercase, stopwords, lemmatization)
                   If False, only basic cleaning is applied
     
@@ -237,19 +270,26 @@ def prepare_data(path: str) -> Tuple[torch.Tensor, torch.Tensor]:
     
     skipped = 0
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:  # utf-8-sig handles BOM
         reader = csv.DictReader(f)
         for row in reader:
-            title = row["title"].strip()
-            label_str = row["label"].strip().lower()
+            # Extract URL (handle different possible column names)
+            url = row.get("url", row.get("URL", row.get("\ufeffurl", ""))).strip()
             
-            # Convert label: fox=0, nbc=1
-            if label_str == "fox":
-                label = 0
-            elif label_str in ["nbc", "nbc news"]:
-                label = 1
+            # Extract title from URL
+            title = extract_title_from_url(url)
+            
+            if not title:
+                skipped += 1
+                continue
+            
+            # Infer label from URL domain
+            if "foxnews.com" in url.lower():
+                label = 0  # fox
+            elif "nbcnews.com" in url.lower():
+                label = 1  # nbc
             else:
-                print(f"Warning: Unknown label '{label_str}' - skipping")
+                print(f"Warning: Unknown domain in URL '{url}' - skipping")
                 skipped += 1
                 continue
             
@@ -315,8 +355,16 @@ def preprocess_and_save(input_csv: str, output_csv: str, normalize: bool = True)
             skipped_failed += 1
             continue
         
-        title = row.get('title', '').strip()
+        # Extract title from URL instead of using 'title' column
+        url = row.get('url', '').strip()
         label = row.get('label', '').strip().lower()
+        
+        # Extract title from URL
+        title = extract_title_from_url(url)
+        
+        if not title:
+            skipped_invalid += 1
+            continue
         
         # Validate label
         if label not in ['fox', 'nbc', 'nbc news']:
@@ -404,8 +452,8 @@ def main():
     import os
     
     # Default paths
-    input_csv = "data/processed/crawled_data_merged.csv"
-    output_csv = "data/processed/processed_data_merged.csv"
+    input_csv = "data/processed/crawled_data_large.csv"
+    output_csv = "data/processed/submission_data.csv"
     # Check if input file exists
     if not os.path.exists(input_csv):
         print(f"Error: Input file not found: {input_csv}")
