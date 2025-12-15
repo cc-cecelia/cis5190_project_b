@@ -3,13 +3,38 @@ from torch import nn
 from typing import Any, Iterable, List
 from transformers import DistilBertModel, DistilBertTokenizerFast
 import os
+from pathlib import Path
 
-import sys
-sys.path.append("..")
-import config
+# ==================== Configuration (merged from config.py) ====================
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-_TOKENIZER = DistilBertTokenizerFast.from_pretrained(config.BERT)
-backbone_base = config.MODELS_DIR
+# --- 数据路径配置（使用绝对路径）---
+DATA_DIR = PROJECT_ROOT / "data"
+RAW_DATA_DIR = DATA_DIR / "raw"
+PROCESSED_DIR = DATA_DIR / "processed"
+PROCESSED_DATA = PROCESSED_DIR / "processed_data.csv"
+PROCESSED_DATA_MERGED = PROCESSED_DIR / "processed_data_merged.csv"
+INITIAL_URLS = RAW_DATA_DIR / "urls_initial.csv"
+CRAWLED_DATA = PROCESSED_DATA / "crawled_data.csv"
+
+# --- 模型配置（使用绝对路径）---
+MODELS_DIR = PROJECT_ROOT / "models"
+MODELS_WEIGHTS_DIR = MODELS_DIR / "weights"
+MODELS_LOG_DIR = MODELS_DIR / "logs"
+MODELS_BASE_CPS = MODELS_DIR / "base_checkpoints"
+MODELS_DAPT_CPS = MODELS_DIR / "dapt_checkpoints"
+BEST_MODEL_WEIGHTS = MODELS_WEIGHTS_DIR / "model.pt"
+
+# --- 报告和图表路径 ---
+REPORT_PATH = "final_report.pdf"
+FIGURES_DIR = PROJECT_ROOT / "figures"
+EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
+
+BERT = "distilbert-base-uncased"
+# ==================== End Configuration ====================
+
+_TOKENIZER = DistilBertTokenizerFast.from_pretrained(BERT)
+backbone_base = MODELS_DIR
 
 class Model(nn.Module):
     """
@@ -28,19 +53,19 @@ class Model(nn.Module):
         super().__init__()
 
         if use_dapt:
-            path = config.MODELS_DAPT_CPS / checkpoint
+            path = MODELS_DAPT_CPS / checkpoint
             if os.path.exists(path):
                 load_path = path # 本地 用指定的dapt backbone
             else:
                 print(f"path is {path}")
-                load_path = config.BERT # 非本地，fallback到 plain bert backbone
+                load_path = BERT # 非本地，fallback到 plain bert backbone
 
         else:
-            path = config.MODELS_BASE_CPS
+            path = MODELS_BASE_CPS
             if os.path.exists(path):
                 load_path = path # 本地 不用dapt 免下载
             else:
-                load_path = config.BERT # 管你本不本地，直接plain bert backbone
+                load_path = BERT # 管你本不本地，直接plain bert backbone
 
         print(f"Initializing model backbone from: {load_path}")
 
