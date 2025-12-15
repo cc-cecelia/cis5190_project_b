@@ -157,9 +157,15 @@ def create_visualizations(fox_counter, nbc_counter, fox_count, nbc_count, top_n=
     # Find common words in top 30 of both
     fox_top_words = set([word for word, _ in fox_counter.most_common(30)])
     nbc_top_words = set([word for word, _ in nbc_counter.most_common(30)])
-    common_words = list(fox_top_words & nbc_top_words)[:15]
+    common_words = list(fox_top_words & nbc_top_words)
     
     if common_words:
+        # Sort by total frequency (sum of fox and nbc counts)
+        common_words_with_totals = [(word, fox_counter[word] + nbc_counter[word]) 
+                                    for word in common_words]
+        common_words_with_totals.sort(key=lambda x: x[1], reverse=True)
+        common_words = [word for word, _ in common_words_with_totals[:15]]
+        
         fox_common = [fox_counter[word] for word in common_words]
         nbc_common = [nbc_counter[word] for word in common_words]
         
@@ -170,7 +176,7 @@ def create_visualizations(fox_counter, nbc_counter, fox_count, nbc_count, top_n=
         ax3.bar([i + width/2 for i in x], nbc_common, width, label='NBC News', color='#0089CF')
         ax3.set_xlabel('Words')
         ax3.set_ylabel('Frequency')
-        ax3.set_title('Common Top Words Comparison')
+        ax3.set_title('Common Top Words Comparison (Sorted by Total Frequency)')
         ax3.set_xticks(x)
         ax3.set_xticklabels(common_words, rotation=45, ha='right')
         ax3.legend()
@@ -238,7 +244,7 @@ def main():
     
     parser = argparse.ArgumentParser(description='Analyze word counts in Fox and NBC news titles')
     parser.add_argument('--file', type=str, 
-                       default='data/processed/processed_data_merged.csv',
+                       default='data/processed/processed_data_large.csv',
                        help='Path to processed_data.csv file')
     parser.add_argument('--lines', type=int, default=None,
                        help='Maximum number of lines to analyze (default: all)')
